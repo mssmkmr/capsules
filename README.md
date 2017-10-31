@@ -1,2 +1,2 @@
 # capsules
-Dynamic Routing Between Capsules, implemented in MXNet (in progless)
+Dynamic Routing Between Capsules, implemented in Gluon/MXNet (in progless)
