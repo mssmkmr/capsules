@@ -21,6 +21,16 @@ train_data = mx.gluon.data.DataLoader(mx.gluon.data.vision.MNIST(train=True, tra
 test_data = mx.gluon.data.DataLoader(mx.gluon.data.vision.MNIST(train=False, transform=transform),
                                      batch_size, shuffle=False)
 
+class SimpleCapsule(Block):
+    def __init__(self, units, in_units=0, **kwargs):
+        super(Capsule, self).__init__(**kwargs)
+        with self.name_scope():
+            self.w = self.params.get('w', shape=(in_units, units))
+    def forward(self, x):
+        with x.context:
+            u = nd.dot(x, self.w.data())
+            return u
+
 class Capsule(Block):
     def __init__(self, units, in_units=0, **kwargs):
         super(Capsule, self).__init__(**kwargs)
@@ -36,11 +46,9 @@ class Capsule(Block):
             fact = s_nrm / ( 1. + s_nrm)
             v = fact * s / nd.sqrt(s_nrm)
             self.u_v = nd.sum(nd.multiply(u, v))
-            return v
+            return u
     def update_b(self):
         self.b.set_data(self.b.data() + self.u_v)
-
-
 
 class CapNet(Block):
     def __init__(self, **kwargs):
@@ -49,9 +57,9 @@ class CapNet(Block):
             self.conv1 = nn.Conv2D(256, 9, activation='relu')
             self.w = []
             for i in range(32):
-                setattr(self, "caps{}".format(i), Capsule(8, 20))
+                setattr(self, "caps{}".format(i), SimpleCapsule(8, 20))
                 self.w += [self.params.get('w{}'.format(i), shape=(8, 16))]
-            self.digitcap = Capsule(10, 16)
+            self.digitcap = SimpleCapsule(10, 16)
     def forward(self, x):
         with x.context:
             x = self.conv1(x)
@@ -103,8 +111,8 @@ for e in range(epochs):
             output = net(data)
             cross_entropy = loss(output, label)
             cross_entropy.backward()
-        capnet.update_b()
-        trainer.step(data.shape[0])
+        # capnet.update_b() # if use normal Capsule
+       trainer.step(data.shape[0])
 
     test_accuracy = evaluate_accuracy(test_data, net)
     train_accuracy = evaluate_accuracy(train_data, net)
