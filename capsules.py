@@ -8,7 +8,7 @@ mx.random.seed(1)
 ###########################
 #  Speficy the context we'll be using
 ###########################
-ctx = mx.gpu()
+ctx = mx.cpu()
 
 ###########################
 #  Load up our dataset
@@ -17,13 +17,13 @@ batch_size = 64
 def transform(data, label):
     return nd.transpose(data.astype(np.float32), (2,0,1))/255, label.astype(np.float32)
 train_data = mx.gluon.data.DataLoader(mx.gluon.data.vision.MNIST(train=True, transform=transform),
-                                      batch_size, shuffle=True)
+                                    batch_size, shuffle=True)
 test_data = mx.gluon.data.DataLoader(mx.gluon.data.vision.MNIST(train=False, transform=transform),
                                      batch_size, shuffle=False)
 
 class SimpleCapsule(Block):
     def __init__(self, units, in_units=0, **kwargs):
-        super(Capsule, self).__init__(**kwargs)
+        super(SimpleCapsule, self).__init__(**kwargs)
         with self.name_scope():
             self.w = self.params.get('w', shape=(in_units, units))
     def forward(self, x):
@@ -112,7 +112,7 @@ for e in range(epochs):
             cross_entropy = loss(output, label)
             cross_entropy.backward()
         # capnet.update_b() # if use normal Capsule
-       trainer.step(data.shape[0])
+        trainer.step(data.shape[0])
 
     test_accuracy = evaluate_accuracy(test_data, net)
     train_accuracy = evaluate_accuracy(train_data, net)
